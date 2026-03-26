@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login & Dashboard</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
+}
+
+body{
+background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45)),
+url("https://images.unsplash.com/photo-1523240795612-9a054b0db644");
+background-size:cover;
+background-position:center;
+min-height:100vh;
+padding:30px;
+}
+
+.login-wrapper,
+.dashboard-wrapper{
+max-width:1100px;
+margin:auto;
+}
+
+.login-box{
+width:380px;
+margin:60px auto;
+background:white;
+padding:40px;
+border-radius:14px;
+box-shadow:0 8px 24px rgba(0,0,0,0.25);
+text-align:center;
+}
+
+.login-box h1{
+margin-bottom:24px;
+color:#222;
+}
+
+input{
+width:100%;
+padding:12px;
+margin:10px 0;
+border:1px solid #ccc;
+border-radius:8px;
+font-size:15px;
+}
+
+button{
+padding:12px 18px;
+border:none;
+border-radius:8px;
+background:#dc3545;
+color:white;
+cursor:pointer;
+font-size:16px;
+transition:0.3s;
+}
+
+button:hover{
+background:#b52a37;
+}
+
+.login-box button{
+width:100%;
+margin-top:10px;
+}
+
+.message{
+margin-top:14px;
+font-size:14px;
+color:#d11a2a;
+min-height:20px;
+}
+
+.dashboard-wrapper{
+display:none;
+}
+
+.topbar{
+background:white;
+border-radius:14px;
+padding:20px 25px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+box-shadow:0 8px 24px rgba(0,0,0,0.18);
+margin-bottom:25px;
+}
+
+.topbar h1{
+color:#222;
+font-size:30px;
+}
+
+.logout-btn{
+background:#007bff;
+}
+
+.logout-btn:hover{
+background:#0056b3;
+}
+
+.section{
+background:white;
+padding:20px;
+margin-bottom:25px;
+border-radius:14px;
+box-shadow:0 8px 24px rgba(0,0,0,0.18);
+}
+
+.section h2{
+margin-bottom:15px;
+color:#007bff;
+}
+
+.action-btn{
+margin-bottom:15px;
+background:#28a745;
+}
+
+.action-btn:hover{
+background:#1f7f35;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+background:white;
+}
+
+th{
+background:#007bff;
+color:white;
+padding:12px;
+text-align:center;
+}
+
+td{
+padding:12px;
+border:1px solid #ddd;
+text-align:center;
+}
+
+.empty{
+color:#666;
+padding:10px 0;
+}
+
+@media(max-width:768px){
+body{
+padding:15px;
+}
+
+.login-box{
+width:100%;
+margin:20px auto;
+}
+
+.topbar{
+flex-direction:column;
+gap:15px;
+text-align:center;
+}
+
+table{
+display:block;
+overflow-x:auto;
+white-space:nowrap;
+}
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrapper" id="loginSection">
+  <div class="login-box">
+    <h1>Admin Login</h1>
+    <form id="adminLoginForm">
+      <input type="text" id="username" placeholder="Admin Username" required>
+      <input type="password" id="password" placeholder="Admin Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p class="message" id="loginMessage"></p>
+  </div>
+</div>
+
+<div class="dashboard-wrapper" id="dashboardSection">
+  <div class="topbar">
+    <h1>Admin Dashboard</h1>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="section">
+    <h2>Registered Users</h2>
+    <button class="action-btn" onclick="loadUsers()">Load Users</button>
+    <table id="usersTable"></table>
+    <p id="usersEmpty" class="empty"></p>
+  </div>
+
+  <div class="section">
+    <h2>Students Data</h2>
+    <button class="action-btn" onclick="loadStudents()">Load Students</button>
+    <table id="studentsTable"></table>
+    <p id="studentsEmpty" class="empty"></p>
+  </div>
+
+  <div class="section">
+    <h2>Complaints Data</h2>
+    <button class="action-btn" onclick="loadComplaints()">Load Complaints</button>
+    <table id="complaintsTable"></table>
+    <p id="complaintsEmpty" class="empty"></p>
+  </div>
+</div>
+
+<script>
+document.getElementById("adminLoginForm").addEventListener("submit", async function(e){
+e.preventDefault();
+
+const username = document.getElementById("username").value.trim();
+const password = document.getElementById("password").value.trim();
+const loginMessage = document.getElementById("loginMessage");
+
+if(username === "" || password === ""){
+loginMessage.innerText = "Please fill all fields";
+return;
+}
+
+try{
+const response = await fetch("http://localhost:3000/api/admin/login",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({ username, password })
+});
+
+const result = await response.text();
+loginMessage.innerText = result;
+
+if(response.ok && result === "Admin Login Successful"){
+document.getElementById("loginSection").style.display = "none";
+document.getElementById("dashboardSection").style.display = "block";
+loadUsers();
+loadStudents();
+loadComplaints();
+}
+}catch(error){
+loginMessage.innerText = "Server connection failed";
+}
+});
+
+async function loadUsers(){
+try{
+const response = await fetch("http://localhost:3000/api/users/all");
+const users = await response.json();
+
+if(!users.length){
+document.getElementById("usersTable").innerHTML = "";
+document.getElementById("usersEmpty").innerText = "No users found";
+return;
+}
+
+document.getElementById("usersEmpty").innerText = "";
+
+let table = "<tr><th>Username</th><th>Email</th><th>Password</th></tr>";
+users.forEach(user=>{
+table += `<tr>
+<td>${user.username || ""}</td>
+<td>${user.email || ""}</td>
+<td>${user.password || ""}</td>
+</tr>`;
+});
+
+document.getElementById("usersTable").innerHTML = table;
+}catch(error){
+document.getElementById("usersEmpty").innerText = "Unable to load users";
+}
+}
+
+async function loadStudents(){
+try{
+const response = await fetch("http://localhost:3000/api/students/all");
+const students = await response.json();
+
+if(!students.length){
+document.getElementById("studentsTable").innerHTML = "";
+document.getElementById("studentsEmpty").innerText = "No students found";
+return;
+}
+
+document.getElementById("studentsEmpty").innerText = "";
+
+let table = "<tr><th>Student ID</th><th>Name</th><th>Department</th></tr>";
+students.forEach(student=>{
+table += `<tr>
+<td>${student.studentId || ""}</td>
+<td>${student.name || ""}</td>
+<td>${student.department || ""}</td>
+</tr>`;
+});
+
+document.getElementById("studentsTable").innerHTML = table;
+}catch(error){
+document.getElementById("studentsEmpty").innerText = "Unable to load students";
+}
+}
+
+async function loadComplaints(){
+try{
+const response = await fetch("http://localhost:3000/api/complaints/all");
+const complaints = await response.json();
+
+if(!complaints.length){
+document.getElementById("complaintsTable").innerHTML = "";
+document.getElementById("complaintsEmpty").innerText = "No complaints found";
+return;
+}
+
+document.getElementById("complaintsEmpty").innerText = "";
+
+let table = "<tr><th>Student ID</th><th>Issue</th><th>Status</th></tr>";
+complaints.forEach(complaint=>{
+table += `<tr>
+<td>${complaint.studentId || ""}</td>
+<td>${complaint.issue || ""}</td>
+<td>${complaint.status || ""}</td>
+</tr>`;
+});
+
+document.getElementById("complaintsTable").innerHTML = table;
+}catch(error){
+document.getElementById("complaintsEmpty").innerText = "Unable to load complaints";
+}
+}
+
+function logout(){
+document.getElementById("dashboardSection").style.display = "none";
+document.getElementById("loginSection").style.display = "block";
+document.getElementById("adminLoginForm").reset();
+document.getElementById("loginMessage").innerText = "";
+}
+</script>
+
+</body>
+</html>

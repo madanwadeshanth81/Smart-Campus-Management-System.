@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Students</title>
+<style>
+body{
+font-family:Arial,sans-serif;
+background:linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),
+url("https://images.unsplash.com/photo-1523240795612-9a054b0db644");
+background-size:cover;
+background-position:center;
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+margin:0;
+padding:30px 0;
+}
+.container{
+background:white;
+padding:40px;
+border-radius:10px;
+box-shadow:0 0 15px rgba(0,0,0,0.2);
+width:650px;
+text-align:center;
+}
+h2{
+margin-bottom:15px;
+}
+input{
+width:90%;
+padding:10px;
+margin:8px 0;
+border:1px solid #ccc;
+border-radius:5px;
+}
+button{
+padding:10px 20px;
+margin-top:10px;
+background:#007bff;
+color:white;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+button:hover{
+background:#0056b3;
+}
+table{
+width:100%;
+margin-top:20px;
+border-collapse:collapse;
+}
+th{
+background:#007bff;
+color:white;
+padding:10px;
+}
+td{
+padding:10px;
+border:1px solid #ccc;
+}
+.load-btn{
+background:#28a745;
+margin-top:15px;
+}
+.load-btn:hover{
+background:#1e7e34;
+}
+.message{
+margin-top:10px;
+font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>Add Student</h2>
+
+<input type="text" id="studentId" placeholder="Student ID">
+<input type="text" id="name" placeholder="Student Name">
+<input type="text" id="department" placeholder="Department">
+<br>
+<button onclick="addStudent()">Add Student</button>
+<p id="message" class="message"></p>
+
+<hr>
+
+<h2>Students List</h2>
+<button class="load-btn" onclick="loadStudents()">Load Students</button>
+<table id="studentTable"></table>
+</div>
+
+<script>
+async function addStudent(){
+const data = {
+studentId: document.getElementById("studentId").value.trim(),
+name: document.getElementById("name").value.trim(),
+department: document.getElementById("department").value.trim()
+};
+
+const message = document.getElementById("message");
+
+if(!data.studentId || !data.name || !data.department){
+message.innerText = "Please fill all fields";
+return;
+}
+
+try{
+const response = await fetch("http://localhost:3000/api/students/add",{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify(data)
+});
+
+const result = await response.text();
+message.innerText = result;
+
+if(response.ok){
+document.getElementById("studentId").value = "";
+document.getElementById("name").value = "";
+document.getElementById("department").value = "";
+loadStudents();
+}
+}catch(error){
+message.innerText = "Server connection failed";
+}
+}
+
+async function loadStudents(){
+try{
+const response = await fetch("http://localhost:3000/api/students/all");
+const students = await response.json();
+
+let table = "<tr><th>ID</th><th>Name</th><th>Department</th></tr>";
+
+students.forEach(s=>{
+table += `<tr>
+<td>${s.studentId}</td>
+<td>${s.name}</td>
+<td>${s.department}</td>
+</tr>`;
+});
+
+document.getElementById("studentTable").innerHTML = table;
+}catch(error){
+document.getElementById("message").innerText = "Unable to load students";
+}
+}
+</script>
+
+</body>
+</html>

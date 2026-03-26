@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Complaints</title>
+<style>
+body{
+font-family:Arial,sans-serif;
+background:linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),
+url("https://images.unsplash.com/photo-1523240795612-9a054b0db644");
+background-size:cover;
+background-position:center;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+margin:0;
+}
+.container{
+background:white;
+padding:40px;
+border-radius:10px;
+box-shadow:0 0 15px rgba(0,0,0,0.2);
+width:350px;
+text-align:center;
+}
+h2{
+margin-bottom:20px;
+}
+input{
+width:100%;
+padding:10px;
+margin:10px 0;
+border:1px solid #ccc;
+border-radius:5px;
+}
+button{
+width:100%;
+padding:10px;
+background:#dc3545;
+color:white;
+border:none;
+border-radius:5px;
+cursor:pointer;
+font-size:16px;
+}
+button:hover{
+background:#b52a37;
+}
+.message{
+margin-top:12px;
+font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>Submit Complaint</h2>
+
+<form id="complaintForm">
+<input type="text" id="studentId" placeholder="Student ID" required>
+<input type="text" id="issue" placeholder="Issue" required>
+<button type="submit">Submit</button>
+</form>
+
+<p id="message" class="message"></p>
+</div>
+
+<script>
+document.getElementById("complaintForm").addEventListener("submit", async function(e){
+e.preventDefault();
+
+const data = {
+studentId: document.getElementById("studentId").value.trim(),
+issue: document.getElementById("issue").value.trim(),
+status: "pending"
+};
+
+const message = document.getElementById("message");
+
+if(!data.studentId || !data.issue){
+message.innerText = "Please fill all fields";
+return;
+}
+
+try{
+const response = await fetch("http://localhost:3000/api/complaints/add",{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify(data)
+});
+
+const result = await response.text();
+message.innerText = result;
+
+if(response.ok){
+document.getElementById("complaintForm").reset();
+}
+}catch(error){
+message.innerText = "Server connection failed";
+}
+});
+</script>
+
+</body>
+</html>
